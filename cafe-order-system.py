@@ -30,7 +30,7 @@ def select_table(table_num):
 
     if request.method == 'POST':
         price = 0
-        for i in request.form.getlist('price'):
+        for i in request.form.getlist('order'):
             price = price + menu[i]
 
         order = {
