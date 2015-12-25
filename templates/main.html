@@ -4,9 +4,51 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로봇 카페 메인</title>
+    <style>
+        body { padding-top: 50px; }
+    </style>
 </head>
 <body>
-
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">Robot Cafe</a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="/">메인<span class="sr-only">(current)</span></a></li>
+        <li><a href="/management">관리(관리자 전용)</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="/login">로그인(관리자 전용)</a></li>
+        <li class="dropdown">
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container">
+    <div class="jumbotron">
+        <h1>로봇카페</h1>
+        <p>로봇카페를 이용해주셔서 감사합니다. 로봇카페의 주문 페이지입니다. 자신이 앉아있는 테이블의 번호를 선택해주십시오.</p>
+    </div>
+    <div class="row">
+        {% for j in range(1,13) %}
+            <div class="col-md-4">
+                <h2>테이블 {{ j }}</h2>
+                <p>{{ j }}번 테이블에서 주문하실려면 아래의 버튼을 클릭해주십시오.</p>
+                <p><a class="btn btn-primary" href="/table/{{ j }}" role="button">테이블 {{ j }}</a></p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 </body>
 </html>

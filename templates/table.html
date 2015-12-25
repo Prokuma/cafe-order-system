@@ -4,9 +4,63 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>메뉴선택</title>
+    <style>
+        body { padding-top: 50px; }
+    </style>
 </head>
 <body>
-
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">Robot Cafe</a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="/">메인<span class="sr-only">(current)</span></a></li>
+        <li><a href="/management">관리(관리자 전용)</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="/login">로그인(관리자 전용)</a></li>
+        <li class="dropdown">
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container">
+    <div class="jumbotron">
+        <h1>메뉴선택</h1>
+        <p>메뉴를 선택하십시오. 최소 한 개 이상 선택해야 합니다.</p>
+    </div>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <strong>주의!</strong> 제작시간상 여유가 없어서 각각 한개씩 밖에 주문 못하는 시스템을 만들었습니다. 만약 같은 메뉴를 두 개 이상 주문시에는, 두번 주문해주시길 바랍니다.
+    </div>
+    <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">목록</div>
+            <div class="panel-body">
+                <form action="/table/{{ num }}" method="post">
+                    {% for j in menu.keys() %}
+                        <p><div class="checkbox">
+                            <label>
+                            <input type="checkbox" value="{{ j }}">
+                            {{ j }}: 가격 {{ menu[j] }}원
+                            </label>
+                        </div></p>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">주문하기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
