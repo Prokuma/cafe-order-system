@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, Response
+from bson.json_util import dumps
 import datetime
 import pymongo
 from pymongo import MongoClient
@@ -17,7 +18,7 @@ app = Flask(__name__)
 client = MongoClient('localhost', 27017)
 db = client.RnBCafe
 order_collection = db.order
-auth_collection = db.auth
+member_collection = db.member
 
 #메인 페이지
 @app.route('/')
@@ -59,19 +60,20 @@ def management():
 Parameter 안내
 
 1.요청
-GET:
-{'new': Bool, 'page': Int}
-new:새로운 정보 하나만 얻어올것 인지, 그렇지 않을 것인지 설정
+POST:
+{'new': Bool, 'page': Int, 'last_id':String}
+new:새로운 정보를 가져올지, 그렇지 않을 것인지 설정
 page:페이지. 처음은 1페이지, 20개 뛰어넘고 보는게 2페이지같은 형식으로 됨
+last_id:가장 최근의 id
 DELETE:
 {'order_id': String}
 order_id:주문번호
 
 2.응답
-GET:
-{'err': Bool, 'data': Array or Dictionary, 'msg': String, 'page': Int}
+POST:
+{'err': Bool, 'data': Arrayy, 'msg': String, 'page': Int}
 err:에러 유무
-data:데이터, new가 True일경우 Dictionary로, False경우는 Array로 보내짐
+data:데이터, 내림차순으로 보내짐
 msg:메시지
 page:페이지
 DELETE:
@@ -80,72 +82,43 @@ err:에러유무
 msg:메시지
 data:없음을 표시하기 위해서 Bool로 False를 표시함
 """
-@app.route('/management/order', methods=['GET','DELETE'])
+@app.route('/management/order', methods=['POST','DELETE'])
 def order_info():
     if 'id' in session:
-        if request.method == 'GET':
+        if request.method == 'POST':
             if request.get_json()['new']:
-                order = order_collection.find().limit(1).sort('_id', pymongo.DESCENDING)[0]
-                return jsonify(
-                    success=True,
-                    data={
-                        'err': False,
-                        'data': order,
-                        'msg': 'Successfully respond'
-                    }
-                )
+                orders = order_collection.find({'_id': {'$gt': ObjectId(request.get_json()['last_id'])}}).sort('_id', pymongo.DESCENDING)
+                order_list = list(orders)
+                json = {'err': False, 'data': order_list, 'msg': 'Successfully respond'}
+                return Response(dumps(json), mimetype='application/json')
             else:
-                orders = order_collection.find().limit(20).skip((int(request.get_json()['page']-1))*20)
-                return jsonify(
-                    success=True,
-                    data={
-                        'err': False,
-                        'data': orders,
-                        'page': int(request.get_json()['page']),
-                        'msg': 'Successfully respond '
-                    }
-                )
+                orders = order_collection.find().limit(20).skip((int(request.get_json()['page']-1))*20).sort('_id', pymongo.DESCENDING)
+                order_list = list(orders)
+                json = {'err': False, 'data': order_list,
+                      'page': int(request.get_json()['page']),
+                      'msg': "Successfully respond"}
+                return Response(dumps(json), mimetype='application/json')
+
         elif request.method == 'DELETE':
             if 'order_id' in request.get_json().keys():
                 order_collection.delete_one({'_id': ObjectId(request.get_json()['order_id'])})
-                return jsonify(
-                    success=True,
-                    data={
-                        'err': False,
-                        'data': False,
-                        'msg': 'Successfully Deleted'
-                    }
-                )
+                json = {'err': False, 'data': False, 'msg': "Successfully Deleted"}
+                return Response(dumps(json), mimetype='application/json')
             else:
-                return jsonify(
-                    success=True,
-                    data={
-                        'err': True,
-                        'msg': 'Parameter Error'
-                    }
-                )
+                json = {'err': True, 'msg': 'Parameter Error'}
+                return Response(dumps(json), mimetype='application/json')
         else:
-            return jsonify(
-                    success=True,
-                    data={
-                        'err': True,
-                        'msg': 'Not Support Method Type'
-                    }
-                )
+            json = {'err': True, 'msg': 'Not Support Method Type'}
+            return Response(dumps(json), mimetype='application/json')
     else:
-        return jsonify(
-            success=True,
-            data={
-                'err': True,
-                'msg': 'Not Permission'
-            }
-        )
+        json = {'err': True, 'msg': 'Not Permission'}
+        return Response(dumps(json), mimetype='application/json')
 
 #GET:로그인 페이지, POST:로그인 처리
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        auth = auth_collection.find_one({'id': request.form.get('id')})
+        auth = member_collection.find_one({'id': request.form.get('id')})
         if auth['password'] == request.form.get('password'):
             session['id'] = request.form.get('id')
             return redirect(url_for('management'))
@@ -172,8 +145,7 @@ def server_error(error):
 
 
 if __name__ == '__main__':
-    #app.debug = True
+    #세션 암호화 키
+    app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+    app.debug = True
     app.run()
-
-#세션 암호화 키
-app.secret_key = 'Secret Key'

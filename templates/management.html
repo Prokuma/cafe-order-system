@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 <html lang="ko">
@@ -35,5 +36,128 @@
     </div>
   </div>
 </nav>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="btn-group" role="group" aria-label="set">
+                <button type="button" class="btn btn-primary" id="refresh">새로고침</button>
+                <button type="button" class="btn btn-success" id="new">새로운 정보 불러오기</button>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div id="contents"></div>
+        </div>
+    </div>
+</div>
+<script>
+    last_id = null;
+
+    //로딩 될 시 불러오기
+    $(window).load(function(){
+         $.ajax({
+            url:'/management/order',
+            contentType:"application/json; charset=UTF-8",
+            timeout:5000,
+            type:'post',
+            dataType:'json',
+            data: JSON.stringify({'new':false, 'page':1}),
+            success:function(data){
+                last_id = data.data[0]._id.$oid;
+                object = '';
+                for(var i=0; i < data.data.length; i++){
+                    order_text = '';
+                    for(var j=0; j < data.data[i].order.length; j++){
+                        order_text += data.data[i].order[j] + ", ";
+                    }
+                    object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
+                            '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
+                                    '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
+                            data.data[i].price.toString() + '</p>' +
+                            '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
+                            '\');">삭제</button></div></div></div>'
+                }
+                $("#contents").html("");
+                $("#contents").html(object);
+            }
+        });
+    });
+
+    //새로고침 시
+    $('#refresh').click(function(){
+        $.ajax({
+            url:'/management/order',
+            contentType:"application/json; charset=UTF-8",
+            timeout:5000,
+            type:'post',
+            dataType:'json',
+            data:JSON.stringify({'new':false, 'page':1}),
+            success:function(data){
+                last_id = data.data[0]._id.$oid;
+                object = '';
+                for(var i=0; i < data.data.length; i++){
+                    order_text = '';
+                    for(var j=0; j < data.data[i].order.length; j++){
+                        order_text += data.data[i].order[j] + ", ";
+                    }
+                    object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
+                            '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
+                                    '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
+                            data.data[i].price.toString() + '</p>' +
+                            '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
+                            '\');">삭제</button></div></div></div>'
+                }
+                $("#contents").html("");
+                $("#contents").html(object);
+            }
+        });
+    });
+
+    //새로운 정보 불러오기 시
+    $('#new').click(function(){
+        if(last_id == null){
+        }else{
+            $.ajax({
+                url:'/management/order',
+                contentType:"application/json; charset=UTF-8",
+                timeout:5000,
+                type:'post',
+                dataType:'json',
+                data:JSON.stringify({'new':true, 'last_id':last_id}),
+                success:function(data){
+                    last_id = data.data[0]._id.$oid;
+                    object = '';
+                    for(var i=0; i < data.data.length; i++){
+                        order_text = '';
+                        for(var j=0; j < data.data[i].order.length; j++){
+                            order_text += data.data[i].order[j] + ", ";
+                        }
+                        object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
+                            '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
+                                    '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
+                            data.data[i].price.toString() + '</p>' +
+                            '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
+                            '\');">삭제</button></div></div></div>'
+                    }
+                    $("#contents").before(object);
+                }
+            });
+        }
+    });
+
+    //항목 삭제
+    function DeleteData(order_id){
+        $.ajax({
+            url:'/management/order',
+            contentType:"application/json; charset=UTF-8",
+            timeout:5000,
+            type:'delete',
+            dataType:'json',
+            data:JSON.stringify({'order_id':order_id}),
+            success:function(data){
+                $('#'+ order_id).detach();
+            }
+        });
+    }
+</script>
 </body>
 </html>
