@@ -5,13 +5,13 @@ import datetime
 import pymongo
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import hashlib
 
-#메뉴
-menu = {
-        '메뉴1'.decode('utf-8'): 3000,
-        '메뉴2'.decode('utf-8'): 5000,
-        '메뉴3'.decode('utf-8'): 6000
-       }
+menu = {}
+f = open('menu.txt')
+for i in f.readlines():
+    a = i.split(':')
+    menu[a[0].decode('utf-8')] = int(a[1])
 
 #DB연결 등
 app = Flask(__name__)
@@ -23,7 +23,7 @@ member_collection = db.member
 #메인 페이지
 @app.route('/')
 def index():
-    return render_template('main.html')
+    return render_template('main.html', session=session)
 
 #GET:테이블별 주문 화면, POST:주문처리
 @app.route('/table/<int:table_num>', methods=['GET', 'POST'])
@@ -41,9 +41,9 @@ def select_table(table_num):
             "time": datetime.datetime.utcnow()
         }
         order_id = str(order_collection.insert(order))
-        return render_template('done.html', order_id=order_id)
+        return render_template('done.html', order_id=order_id, session=session)
     else:
-        return render_template('table.html', num=table_num, menu=menu)
+        return render_template('table.html', num=table_num, menu=menu, session=session)
 
 #관리 화면
 @app.route('/management')
@@ -118,14 +118,21 @@ def order_info():
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        auth = member_collection.find_one({'id': request.form.get('id')})
-        if auth['password'] == request.form.get('password'):
-            session['id'] = request.form.get('id')
+        if 'id' in session:
             return redirect(url_for('management'))
+        auth = member_collection.find_one({'id': request.form.get('id')})
+        if auth is not None:
+            if auth['password'] == hashlib.sha512(request.form.get('password')).hexdigest():
+                session['id'] = request.form.get('id')
+                return redirect(url_for('management'))
+            else:
+                return render_template('error.html', msg='ID또는 암호가 일치하지 않습니다.'.decode('utf-8'), session=session)
         else:
-            return render_template('error.html', msg='ID또는 암호가 일치하지 않습니다.')
+            return render_template('error.html', msg='ID또는 암호가 일치하지 않습니다.'.decode('utf-8'), sessino=session)
     else:
-        return render_template('login.html')
+        if 'id' in session:
+            return redirect(url_for('management'))
+        return render_template('login.html', session=session)
 
 #로그아웃 처리
 @app.route('/logout')
@@ -136,16 +143,16 @@ def logout():
 #404페이지
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('error.html', msg='404 Not Found. 페이지를 찾을 수 없습니다.'.decode('utf-8')), 404
+    return render_template('error.html', msg='404 Not Found. 페이지를 찾을 수 없습니다.'.decode('utf-8'), session=session), 404
 
 #500페이지
 @app.errorhandler(500)
 def server_error(error):
-    return render_template('error.html', msg='500 Internal Server Error. 서버오류로 인해 사용 할 수 없습니다.'.decode('utf-8')), 500
+    return render_template('error.html', msg='500 Internal Server Error. 서버오류로 인해 사용 할 수 없습니다.'.decode('utf-8'), session=session), 500
 
 
 if __name__ == '__main__':
     #세션 암호화 키
     app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-    app.debug = True
+    #app.debug = True
     app.run()

@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>로봇 카페 메인</title>
     <style>
+        @import url("http://fonts.googleapis.com/earlyaccess/nanumgothic.css");
+        *{font-family:'Nanum Gothic';}
         body { padding-top: 50px; }
     </style>
 </head>
@@ -28,9 +30,11 @@
         <li><a href="/management">관리(관리자 전용)</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="/login">로그인(관리자 전용)</a></li>
-        <li class="dropdown">
-        </li>
+        {% if 'id' in session %}
+          <li><a href="/logout">로그아웃</a></li>
+        {% else %}
+          <li><a href="/login">로그인(관리자 전용)</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>

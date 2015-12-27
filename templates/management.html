@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>관리(관리자 전용)</title>
     <style>
+        @import url("http://fonts.googleapis.com/earlyaccess/nanumgothic.css");
+        *{font-family:'Nanum Gothic';}
         body { padding-top: 70px; }
     </style>
 </head>
@@ -29,9 +31,11 @@
         <li class="active"><a href="/management">관리(관리자 전용)</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="/login">로그인(관리자 전용)</a></li>
-        <li class="dropdown">
-        </li>
+        {% if 'id' in session %}
+          <li><a href="/logout">로그아웃</a></li>
+        {% else %}
+          <li><a href="/login">로그인(관리자 전용)</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>
@@ -45,12 +49,15 @@
             </div>
         </div>
         <div class="col-md-12">
-            <div id="contents"></div>
+            <div id="contents">
+                <button id="more" class="btn btn-primary center-block">더 불러오기</button>
+            </div>
         </div>
     </div>
 </div>
 <script>
     last_id = null;
+    page = 1;
 
     //로딩 될 시 불러오기
     $(window).load(function(){
@@ -62,6 +69,7 @@
             dataType:'json',
             data: JSON.stringify({'new':false, 'page':1}),
             success:function(data){
+                page = 1;
                 last_id = data.data[0]._id.$oid;
                 object = '';
                 for(var i=0; i < data.data.length; i++){
@@ -72,12 +80,11 @@
                     object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
                             '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
                                     '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
-                            data.data[i].price.toString() + '</p>' +
+                            data.data[i].price.toString() + '</p><p>테이블 번호: ' + data.data[i].table.toString() + '</p>' +
                             '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
-                            '\');">삭제</button></div></div></div>'
+                            '\');">삭제</button></div></div></div>';
                 }
-                $("#contents").html("");
-                $("#contents").html(object);
+                $("#more").before(object);
             }
         });
     });
@@ -92,6 +99,7 @@
             dataType:'json',
             data:JSON.stringify({'new':false, 'page':1}),
             success:function(data){
+                page=1;
                 last_id = data.data[0]._id.$oid;
                 object = '';
                 for(var i=0; i < data.data.length; i++){
@@ -102,10 +110,11 @@
                     object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
                             '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
                                     '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
-                            data.data[i].price.toString() + '</p>' +
+                            data.data[i].price.toString() + '</p><p>테이블 번호: ' + data.data[i].table.toString() + '</p>' +
                             '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
-                            '\');">삭제</button></div></div></div>'
+                            '\');">삭제</button></div></div></div>';
                 }
+                object += '<button id="more" class="btn btn-primary center-block">더 불러오기</button>';
                 $("#contents").html("");
                 $("#contents").html(object);
             }
@@ -124,7 +133,6 @@
                 dataType:'json',
                 data:JSON.stringify({'new':true, 'last_id':last_id}),
                 success:function(data){
-                    last_id = data.data[0]._id.$oid;
                     object = '';
                     for(var i=0; i < data.data.length; i++){
                         order_text = '';
@@ -134,14 +142,47 @@
                         object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
                             '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
                                     '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
-                            data.data[i].price.toString() + '</p>' +
+                            data.data[i].price.toString() + '</p><p>테이블 번호: ' + data.data[i].table.toString() + '</p>' +
                             '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
-                            '\');">삭제</button></div></div></div>'
+                            '\');">삭제</button></div></div></div>';
                     }
-                    $("#contents").before(object);
+                    $("#"+last_id).before(object);
+                    last_id = data.data[0]._id.$oid;
                 }
             });
         }
+    });
+
+
+    $('#more').click(function(){
+        $.ajax({
+            url:'/management/order',
+            contentType:"application/json; charset=UTF-8",
+            timeout:5000,
+            type:'post',
+            dataType:'json',
+            data:JSON.stringify({'new':false, 'page':page + 1}),
+            success:function(data){
+                page = page + 1;
+                last_id = data.data[0]._id.$oid;
+                object = '';
+                for(var i=0; i < data.data.length; i++){
+                    order_text = '';
+                    for(var j=0; j < data.data[i].order.length; j++){
+                        order_text += data.data[i].order[j] + ", ";
+                    }
+                    object += '<div id="'+ data.data[i]._id.$oid + '">' + '<div class="panel panel-primary">' +
+                            '<div class="panel-heading">주문번호:' + data.data[i]._id.$oid +
+                                    '</div><div class="panel panel-body"><p>주문 내용: ' + order_text + '</p><p>가격:' +
+                            data.data[i].price.toString() + '</p><p>테이블 번호: ' + data.data[i].table.toString() + '</p>' +
+                            '<button class="btn btn-danger" onclick="DeleteData(\'' + data.data[i]._id.$oid +
+                            '\');">삭제</button></div></div></div>';
+                }
+                object += '<button id="more" class="btn btn-primary center-block">더 불러오기</button>';
+                $("#more").detach();
+                $("#contents").append(object);
+            }
+        });
     });
 
     //항목 삭제
