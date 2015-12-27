@@ -155,4 +155,4 @@ if __name__ == '__main__':
     #세션 암호화 키
     app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
     #app.debug = True
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
